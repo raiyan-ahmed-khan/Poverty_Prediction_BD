@@ -1,0 +1,284 @@
+{
+  "model_name": "Random Forest Regressor",
+  "n_features": 19,
+  "feature_names": [
+    "ntl_mean",
+    "ntl_std",
+    "ntl_max",
+    "ntl_per_capita",
+    "ntl_trend",
+    "ntl_yoy_change",
+    "ntl_iqr",
+    "pop_density",
+    "ndvi_mean",
+    "ndvi_std",
+    "urban_fraction",
+    "water_fraction",
+    "elevation_mean",
+    "elevation_std",
+    "road_density",
+    "ntl_mean_spatial_lag",
+    "ntl_per_capita_spatial_lag",
+    "ndvi_mean_spatial_lag",
+    "pop_density_spatial_lag"
+  ],
+  "feature_importance": {
+    "elevation_mean": 0.191653,
+    "ntl_mean_spatial_lag": 0.172576,
+    "ntl_iqr": 0.09279,
+    "road_density": 0.092069,
+    "ntl_yoy_change": 0.064808,
+    "ndvi_mean_spatial_lag": 0.054767,
+    "water_fraction": 0.032873,
+    "pop_density_spatial_lag": 0.031948,
+    "ntl_max": 0.031214,
+    "ntl_std": 0.030347,
+    "ndvi_std": 0.028994,
+    "ntl_per_capita_spatial_lag": 0.028842,
+    "elevation_std": 0.026434,
+    "ntl_trend": 0.023881,
+    "ntl_mean": 0.022724,
+    "pop_density": 0.020309,
+    "ndvi_mean": 0.019482,
+    "ntl_per_capita": 0.018369,
+    "urban_fraction": 0.015922
+  },
+  "performance": {
+    "rmse": 3.626,
+    "mae": 2.926,
+    "r2": 0.241,
+    "validation": "Leave-One-District-Out CV"
+  },
+  "models_comparison": [
+    {
+      "name": "Naive Baseline",
+      "rmse": 4.163,
+      "mae": 3.596,
+      "r2": 0.0
+    },
+    {
+      "name": "CNN ResNet-18",
+      "rmse": 4.354,
+      "mae": 3.188,
+      "r2": -0.094
+    },
+    {
+      "name": "Random Forest",
+      "rmse": 3.626,
+      "mae": 2.926,
+      "r2": 0.241
+    }
+  ],
+  "division_results": [
+    {
+      "division": "Barishal",
+      "poverty_hcr": 26.9,
+      "n": 6,
+      "rf_rmse": 5.326,
+      "cnn_rmse": 10.439
+    },
+    {
+      "division": "Chattogram",
+      "poverty_hcr": 15.8,
+      "n": 11,
+      "rf_rmse": 2.364,
+      "cnn_rmse": 1.264
+    },
+    {
+      "division": "Dhaka",
+      "poverty_hcr": 17.9,
+      "n": 13,
+      "rf_rmse": 0.474,
+      "cnn_rmse": 1.984
+    },
+    {
+      "division": "Khulna",
+      "poverty_hcr": 14.8,
+      "n": 10,
+      "rf_rmse": 4.18,
+      "cnn_rmse": 1.02
+    },
+    {
+      "division": "Mymensingh",
+      "poverty_hcr": 24.2,
+      "n": 4,
+      "rf_rmse": 5.622,
+      "cnn_rmse": 3.636
+    },
+    {
+      "division": "Rajshahi",
+      "poverty_hcr": 16.7,
+      "n": 8,
+      "rf_rmse": 2.039,
+      "cnn_rmse": 2.63
+    },
+    {
+      "division": "Rangpur",
+      "poverty_hcr": 24.8,
+      "n": 8,
+      "rf_rmse": 4.057,
+      "cnn_rmse": 7.284
+    },
+    {
+      "division": "Sylhet",
+      "poverty_hcr": 17.4,
+      "n": 4,
+      "rf_rmse": 2.514,
+      "cnn_rmse": 1.685
+    }
+  ],
+  "feature_ranges": {
+    "ntl_mean": {
+      "min": 0.3414,
+      "max": 5.7814,
+      "median": 0.6623,
+      "mean": 0.8727
+    },
+    "ntl_std": {
+      "min": 0.1476,
+      "max": 8.3114,
+      "median": 0.5287,
+      "mean": 0.9542
+    },
+    "ntl_max": {
+      "min": 3.085,
+      "max": 142.93,
+      "median": 10.4375,
+      "mean": 19.7052
+    },
+    "ntl_per_capita": {
+      "min": 0.0413,
+      "max": 0.3844,
+      "median": 0.0763,
+      "mean": 0.0894
+    },
+    "ntl_trend": {
+      "min": 0.0123,
+      "max": 0.3896,
+      "median": 0.0291,
+      "mean": 0.0428
+    },
+    "ntl_yoy_change": {
+      "min": 0.0087,
+      "max": 0.6766,
+      "median": 0.0421,
+      "mean": 0.0676
+    },
+    "ntl_iqr": {
+      "min": 0.0,
+      "max": 5.959,
+      "median": 0.2185,
+      "mean": 0.4055
+    },
+    "pop_density": {
+      "min": 0.9289,
+      "max": 95.922,
+      "median": 8.9822,
+      "mean": 11.2841
+    },
+    "ndvi_mean": {
+      "min": 0.3707,
+      "max": 0.7781,
+      "median": 0.5927,
+      "mean": 0.5852
+    },
+    "ndvi_std": {
+      "min": 0.0257,
+      "max": 0.2981,
+      "median": 0.1222,
+      "mean": 0.1187
+    },
+    "urban_fraction": {
+      "min": 0.0005,
+      "max": 0.1758,
+      "median": 0.007,
+      "mean": 0.015
+    },
+    "water_fraction": {
+      "min": 0.0003,
+      "max": 0.3038,
+      "median": 0.0535,
+      "mean": 0.0657
+    },
+    "elevation_mean": {
+      "min": 4.2373,
+      "max": 193.4331,
+      "median": 11.876,
+      "mean": 21.8592
+    },
+    "elevation_std": {
+      "min": 2.3306,
+      "max": 169.0192,
+      "median": 3.6892,
+      "mean": 10.7446
+    },
+    "road_density": {
+      "min": 0.0229,
+      "max": 9.6788,
+      "median": 2.1277,
+      "mean": 2.5851
+    },
+    "ntl_mean_spatial_lag": {
+      "min": 0.4843,
+      "max": 2.3923,
+      "median": 0.7086,
+      "mean": 0.9008
+    },
+    "ntl_per_capita_spatial_lag": {
+      "min": 0.0504,
+      "max": 0.2503,
+      "median": 0.077,
+      "mean": 0.0888
+    },
+    "ndvi_mean_spatial_lag": {
+      "min": 0.477,
+      "max": 0.7287,
+      "median": 0.579,
+      "mean": 0.5837
+    },
+    "pop_density_spatial_lag": {
+      "min": 6.1702,
+      "max": 31.9046,
+      "median": 9.2633,
+      "mean": 11.5028
+    }
+  },
+  "slider_features": [
+    {
+      "key": "ntl_mean",
+      "label": "NTL Mean (Nighttime Light)",
+      "icon": "\ud83c\udf19",
+      "step": 0.01
+    },
+    {
+      "key": "ndvi_mean",
+      "label": "NDVI (Vegetation Index)",
+      "icon": "\ud83c\udf3f",
+      "step": 0.01
+    },
+    {
+      "key": "elevation_mean",
+      "label": "Elevation Mean (m)",
+      "icon": "\ud83c\udfd4\ufe0f",
+      "step": 0.5
+    },
+    {
+      "key": "road_density",
+      "label": "Road Density (km/km\u00b2)",
+      "icon": "\ud83d\udee3\ufe0f",
+      "step": 0.1
+    },
+    {
+      "key": "urban_fraction",
+      "label": "Urban Fraction",
+      "icon": "\ud83c\udfd9\ufe0f",
+      "step": 0.001
+    },
+    {
+      "key": "water_fraction",
+      "label": "Water Fraction",
+      "icon": "\ud83d\udca7",
+      "step": 0.001
+    }
+  ]
+}
