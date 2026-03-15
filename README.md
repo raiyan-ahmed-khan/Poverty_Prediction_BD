@@ -118,6 +118,8 @@ streamlit run app.py
 
 ---
 
+- **Research Paper:** [PDF](docs/Bangladesh_Poverty_Prediction___Satellite_ML_research_paper.pdf)
+
 ## 📄 Citation
 ```bibtex
 @misc{khan2024poverty,
