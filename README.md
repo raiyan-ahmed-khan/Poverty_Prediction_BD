@@ -6,7 +6,8 @@
 
 **ISRT · University of Dhaka · 2024**
 
-[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://povertypredictionbd-phjajjhjhoxmrkzgy7kxod.streamlit.app)
+[![Main Website](https://img.shields.io/badge/Main%20Website-Netlify-00c7b7?logo=netlify&logoColor=white)](https://poverty-prediction-bd.netlify.app/)
+[![Interactive Dashboard](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://povertypredictionbd-phjajjhjhoxmrkzgy7kxod.streamlit.app)
 [![API Status](https://img.shields.io/badge/API-Live-brightgreen)](https://bangladesh-poverty-api.onrender.com/docs)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.10](https://img.shields.io/badge/Python-3.10-blue)](https://www.python.org/)
@@ -119,7 +120,7 @@ Poverty_Prediction_BD/
 │   ├── figures/               # Charts and visualizations
 │   ├── maps/                  # Choropleth maps
 │   └── tables/                # Results tables (CSV)
-├── docs/                      # Data dictionary, methodology, paper
+├── docs/                      # Data dictionary and methodology
 ├── lovable_app/
 │   ├── backend/               # FastAPI prediction API
 │   └── data/                  # GeoJSON and JSON for frontend
@@ -180,9 +181,9 @@ uvicorn main:app --reload --port 8000
 
 | Resource | Link |
 |----------|------|
-| 🖥️ Streamlit Dashboard | [povertypredictionbd.streamlit.app](https://povertypredictionbd-phjajjhjhoxmrkzgy7kxod.streamlit.app) |
+| 🌐 Main Website | [poverty-prediction-bd.netlify.app](https://poverty-prediction-bd.netlify.app/) |
+| 🖥️ Interactive Dashboard | [povertypredictionbd.streamlit.app](https://povertypredictionbd-phjajjhjhoxmrkzgy7kxod.streamlit.app) |
 | ⚙️ API Documentation | [bangladesh-poverty-api.onrender.com/docs](https://bangladesh-poverty-api.onrender.com/docs) |
-| 📄 Research Paper | [PDF](docs/Bangladesh_Poverty_Prediction___Satellite_ML_research_paper.pdf) |
 
 ---
 
