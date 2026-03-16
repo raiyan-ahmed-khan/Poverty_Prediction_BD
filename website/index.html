@@ -1,0 +1,1540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mapping Poverty from Space · Bangladesh</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --card: #0f1520;
+      --card-border: #1e2d40;
+      --accent: #00c4ff;
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --green: #22c55e;
+      --amber: #f59e0b;
+      --red: #ef4444;
+      --glass: rgba(15, 21, 32, 0.8);
+      --transition: 200ms ease;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+      background-image:
+        radial-gradient(circle at 8% 12%, rgba(0, 196, 255, 0.12), transparent 26%),
+        radial-gradient(circle at 85% 18%, rgba(34, 197, 94, 0.08), transparent 22%),
+        radial-gradient(circle at 82% 80%, rgba(245, 158, 11, 0.08), transparent 28%);
+    }
+
+    body::before,
+    body::after {
+      content: '';
+      position: fixed;
+      width: 360px;
+      height: 360px;
+      border-radius: 50%;
+      filter: blur(60px);
+      pointer-events: none;
+      z-index: -3;
+      opacity: 0.28;
+      animation: floatBlob 16s ease-in-out infinite;
+    }
+
+    body::before {
+      top: -120px;
+      left: -120px;
+      background: rgba(0, 196, 255, 0.45);
+    }
+
+    body::after {
+      right: -120px;
+      bottom: -140px;
+      background: rgba(30, 64, 175, 0.4);
+      animation-delay: -7s;
+    }
+
+    @keyframes floatBlob {
+      0%, 100% { transform: translateY(0) translateX(0) scale(1); }
+      50% { transform: translateY(28px) translateX(-12px) scale(1.08); }
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .section {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 96px 20px;
+      position: relative;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      box-shadow: 0 16px 34px rgba(3, 7, 18, 0.35);
+      transition: transform var(--transition), border-color var(--transition), box-shadow var(--transition);
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(0, 196, 255, 0.4);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 20px;
+      border-radius: 12px;
+      border: 1px solid var(--card-border);
+      transition: transform var(--transition), border-color var(--transition), background-color var(--transition), box-shadow var(--transition);
+      font-weight: 600;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      border-color: var(--accent);
+      box-shadow: 0 10px 24px rgba(0, 196, 255, 0.22);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, rgba(0, 196, 255, 0.28), rgba(0, 196, 255, 0.08));
+      border-color: rgba(0, 196, 255, 0.45);
+      color: #d7f6ff;
+    }
+
+    .btn-secondary {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+      color: var(--text);
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 700ms ease, transform 700ms ease, filter 700ms ease;
+      filter: blur(4px);
+    }
+
+    .reveal.in-view {
+      opacity: 1;
+      transform: translateY(0);
+      filter: blur(0);
+    }
+
+    #hero {
+      position: relative;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px 20px;
+      isolation: isolate;
+    }
+
+    #heroCanvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -2;
+      background: radial-gradient(circle at 20% 20%, rgba(0, 196, 255, 0.1), transparent 35%), radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.05), transparent 40%);
+    }
+
+    .hero-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      background: linear-gradient(to bottom, rgba(10, 10, 15, 0.28), rgba(10, 10, 15, 0.85));
+    }
+
+    .hero-content {
+      max-width: 860px;
+      text-align: center;
+      padding: 28px;
+      border-radius: 20px;
+      background: linear-gradient(180deg, rgba(15, 21, 32, 0.5), rgba(15, 21, 32, 0.2));
+      border: 1px solid rgba(30, 45, 64, 0.5);
+      box-shadow: 0 24px 48px rgba(2, 6, 23, 0.45);
+    }
+
+    .badge {
+      display: inline-flex;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(0, 196, 255, 0.45);
+      background: rgba(0, 196, 255, 0.1);
+      color: #b8eeff;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      margin-bottom: 18px;
+      box-shadow: 0 8px 16px rgba(0, 196, 255, 0.14);
+    }
+
+    h1 {
+      font-size: clamp(2.5rem, 6vw, 5rem);
+      line-height: 1.05;
+      margin-bottom: 16px;
+    }
+
+    .accent {
+      color: var(--accent);
+      text-shadow: 0 0 22px rgba(0, 196, 255, 0.45);
+    }
+
+    .hero-subtitle {
+      max-width: 760px;
+      margin: 0 auto 30px;
+      color: #c5cfde;
+      font-size: 1.05rem;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+    }
+
+    .scroll-indicator {
+      position: absolute;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .mouse {
+      width: 24px;
+      height: 40px;
+      border: 2px solid #8aa4be;
+      border-radius: 16px;
+      position: relative;
+    }
+
+    .mouse::after {
+      content: '';
+      position: absolute;
+      width: 4px;
+      height: 8px;
+      border-radius: 999px;
+      background: #8aa4be;
+      left: 50%;
+      top: 7px;
+      transform: translateX(-50%);
+      animation: scrollDot 1.5s infinite;
+    }
+
+    @keyframes scrollDot {
+      0% { opacity: 0; transform: translate(-50%, 0); }
+      20% { opacity: 1; }
+      100% { opacity: 0; transform: translate(-50%, 14px); }
+    }
+
+    .problem-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      align-items: stretch;
+    }
+
+    .counter-stack {
+      display: grid;
+      gap: 14px;
+    }
+
+    .counter-card {
+      padding: 20px;
+      min-height: 104px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: linear-gradient(130deg, rgba(15, 21, 32, 0.96), rgba(10, 14, 22, 0.94));
+    }
+
+    .counter-value {
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--accent);
+      min-width: 60px;
+    }
+
+    .problem-copy {
+      padding: 28px;
+    }
+
+    .problem-copy h2,
+    .section-title {
+      font-size: clamp(1.8rem, 3vw, 2.4rem);
+      margin-bottom: 14px;
+      position: relative;
+      display: inline-block;
+      background: linear-gradient(90deg, #f5f8ff, #b9eefe);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .section-title::after,
+    .problem-copy h2::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      bottom: -8px;
+      width: 64px;
+      height: 3px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--accent), transparent);
+    }
+
+    .pipeline-wrap {
+      position: relative;
+      margin-top: 20px;
+      padding-top: 24px;
+    }
+
+    .pipeline-line {
+      position: absolute;
+      top: 56px;
+      left: 5%;
+      width: 90%;
+      height: 2px;
+      background: rgba(100, 116, 139, 0.35);
+      overflow: hidden;
+    }
+
+    .pipeline-line::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      width: 0;
+      background: linear-gradient(90deg, rgba(0, 196, 255, 0.15), var(--accent), rgba(0, 196, 255, 0.15));
+      transition: width 1.5s ease;
+    }
+
+    .pipeline-wrap.in-view .pipeline-line::after {
+      width: 100%;
+    }
+
+    .pipeline-grid {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(140px, 1fr));
+      gap: 12px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .pipeline-step {
+      text-align: center;
+      padding: 12px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0));
+      border: 1px solid rgba(100, 116, 139, 0.18);
+      border-radius: 14px;
+      transition: transform var(--transition), border-color var(--transition), background-color var(--transition);
+    }
+
+    .pipeline-step:hover {
+      transform: translateY(-3px);
+      border-color: rgba(0, 196, 255, 0.42);
+      background: linear-gradient(180deg, rgba(0, 196, 255, 0.1), rgba(255, 255, 255, 0));
+    }
+
+    .step-icon {
+      width: 52px;
+      height: 52px;
+      margin: 0 auto 10px;
+      border-radius: 50%;
+      border: 1px solid rgba(0, 196, 255, 0.5);
+      background: rgba(0, 196, 255, 0.09);
+      display: grid;
+      place-items: center;
+      font-size: 24px;
+    }
+
+    .pipeline-step h3 {
+      font-size: 0.95rem;
+      margin-bottom: 4px;
+    }
+
+    .pipeline-step p {
+      color: var(--muted);
+      font-size: 0.85rem;
+      line-height: 1.35;
+    }
+
+    .findings-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 18px;
+    }
+
+    .glass-card {
+      background: var(--glass);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(56, 189, 248, 0.18);
+      border-radius: 16px;
+      padding: 26px;
+      transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+    }
+
+    .glass-card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(0, 196, 255, 0.65);
+      box-shadow: 0 0 28px rgba(0, 196, 255, 0.18);
+    }
+
+    .finding-value {
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+
+    .map-layout {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .map-shell {
+      position: relative;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid var(--card-border);
+      min-height: 500px;
+      background: #0b1320;
+    }
+
+    #map {
+      height: 500px;
+      width: 100%;
+    }
+
+    .map-loading {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(90deg, rgba(15, 21, 32, 0.9), rgba(30, 45, 64, 0.6), rgba(15, 21, 32, 0.9));
+      color: #c6d0df;
+      z-index: 900;
+      animation: shimmer 1.4s linear infinite;
+    }
+
+    @keyframes shimmer {
+      0% { background-position: -200px 0; }
+      100% { background-position: 200px 0; }
+    }
+
+    .district-panel {
+      padding: 20px;
+      background: linear-gradient(160deg, rgba(15, 21, 32, 0.96), rgba(12, 18, 28, 0.95));
+    }
+
+    .district-panel h3 {
+      margin-bottom: 10px;
+      font-size: 1.2rem;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      font-size: 0.82rem;
+      font-weight: 700;
+      border-radius: 999px;
+      padding: 6px 10px;
+      margin: 8px 0 14px;
+      border: 1px solid transparent;
+    }
+
+    .features-grid {
+      display: grid;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .feature-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(100, 116, 139, 0.2);
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 0.9rem;
+    }
+
+    .predictor-layout {
+      display: grid;
+      grid-template-columns: 1.3fr 1fr;
+      gap: 18px;
+      margin-top: 16px;
+    }
+
+    .slider-panel,
+    .gauge-panel {
+      padding: 20px;
+      background: linear-gradient(160deg, rgba(15, 21, 32, 0.96), rgba(12, 18, 28, 0.95));
+    }
+
+    .slider-group {
+      margin-bottom: 14px;
+    }
+
+    .slider-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 6px;
+      font-size: 0.9rem;
+    }
+
+    .slider-group input[type="range"] {
+      width: 100%;
+      cursor: pointer;
+      appearance: none;
+      height: 8px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--accent) 0%, var(--accent) 0%, rgba(100, 116, 139, 0.24) 0%, rgba(100, 116, 139, 0.24) 100%);
+      outline: none;
+    }
+
+    .slider-group input[type="range"]::-webkit-slider-thumb {
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #e8f8ff;
+      border: 2px solid var(--accent);
+      box-shadow: 0 0 0 4px rgba(0, 196, 255, 0.12);
+    }
+
+    .slider-group input[type="range"]::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #e8f8ff;
+      border: 2px solid var(--accent);
+      box-shadow: 0 0 0 4px rgba(0, 196, 255, 0.12);
+    }
+
+    .slider-range-meta {
+      margin-top: 6px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.76rem;
+      color: var(--muted);
+    }
+
+    .gauge-panel-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .gauge-panel-top h3 {
+      font-size: 1rem;
+      margin: 0;
+    }
+
+    .predict-status {
+      font-size: 0.75rem;
+      font-weight: 700;
+      border-radius: 999px;
+      padding: 5px 9px;
+      border: 1px solid rgba(100, 116, 139, 0.45);
+      color: #9fb5cc;
+      background: rgba(100, 116, 139, 0.15);
+      white-space: nowrap;
+    }
+
+    .progress-wrap {
+      margin-bottom: 14px;
+      display: none;
+    }
+
+    .progress-wrap.active {
+      display: block;
+    }
+
+    .progress-msg {
+      font-size: 0.86rem;
+      color: #9fb5cc;
+      margin-bottom: 6px;
+    }
+
+    .progress-bar {
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(100, 116, 139, 0.25);
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0;
+      background: linear-gradient(90deg, rgba(0, 196, 255, 0.35), var(--accent));
+      transition: width 400ms linear;
+    }
+
+    .loading-inline {
+      display: none;
+      margin-bottom: 12px;
+      font-size: 0.88rem;
+      color: #9fb5cc;
+      border: 1px solid rgba(100, 116, 139, 0.35);
+      background: rgba(100, 116, 139, 0.12);
+      border-radius: 10px;
+      padding: 8px 10px;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .loading-inline.active {
+      display: inline-flex;
+    }
+
+    .loading-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: pulseDot 1s ease-in-out infinite;
+    }
+
+    @keyframes pulseDot {
+      0%, 100% { opacity: 0.35; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.18); }
+    }
+
+    .gauge-shell {
+      text-align: center;
+    }
+
+    .gauge-shell svg {
+      width: 100%;
+      max-width: 260px;
+      height: auto;
+    }
+
+    #gaugeArc {
+      transition: stroke-dashoffset 350ms ease, stroke 280ms ease;
+    }
+
+    .gauge-value {
+      font-size: 2.2rem;
+      font-weight: 800;
+      margin-top: -8px;
+    }
+
+    .gauge-label {
+      font-size: 0.9rem;
+      color: var(--muted);
+      margin-top: -2px;
+    }
+
+    .predict-meta {
+      margin-top: 6px;
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    .similar-title {
+      margin-top: 16px;
+      margin-bottom: 6px;
+      font-size: 0.9rem;
+      color: #bed1e6;
+      font-weight: 600;
+    }
+
+    .similar-list {
+      margin-top: 16px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .similar-item {
+      border: 1px solid rgba(100, 116, 139, 0.28);
+      border-radius: 10px;
+      padding: 8px 10px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.9rem;
+      background: rgba(255, 255, 255, 0.02);
+      transition: transform var(--transition), border-color var(--transition);
+    }
+
+    .similar-item:hover {
+      transform: translateY(-2px);
+      border-color: rgba(0, 196, 255, 0.42);
+    }
+
+    .chart-block {
+      margin-top: 18px;
+      padding: 20px;
+      background: linear-gradient(150deg, rgba(15, 21, 32, 0.96), rgba(12, 18, 28, 0.95));
+    }
+
+    .bar-item {
+      margin-bottom: 12px;
+    }
+
+    .bar-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.9rem;
+      margin-bottom: 4px;
+    }
+
+    .bar-track {
+      height: 12px;
+      border-radius: 999px;
+      background: rgba(100, 116, 139, 0.24);
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: inherit;
+    }
+
+    .caption {
+      color: var(--muted);
+      font-size: 0.86rem;
+      margin-top: 8px;
+    }
+
+    .quote-card {
+      padding: 54px 24px;
+      text-align: center;
+      background: linear-gradient(160deg, rgba(15, 21, 32, 0.92), rgba(8, 22, 36, 0.92));
+      border: 1px solid rgba(0, 196, 255, 0.2);
+      border-radius: 18px;
+      box-shadow: 0 0 34px rgba(0, 196, 255, 0.12);
+    }
+
+    .quote-card blockquote {
+      font-size: clamp(1.4rem, 3.8vw, 2.2rem);
+      font-style: italic;
+      line-height: 1.35;
+      color: #f3f6fb;
+      margin-bottom: 12px;
+    }
+
+    .quote-subtext {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    footer {
+      padding: 42px 20px 28px;
+      border-top: 1px solid rgba(100, 116, 139, 0.2);
+      margin-top: 30px;
+    }
+
+    .footer-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .footer-links {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .leaflet-tooltip.custom-tooltip {
+      background: rgba(15, 21, 32, 0.92);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 8px;
+      box-shadow: none;
+    }
+
+    @media (max-width: 1080px) {
+      .pipeline-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .pipeline-line {
+        display: none;
+      }
+
+      .map-layout,
+      .predictor-layout,
+      .problem-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .map-shell {
+        min-height: 420px;
+      }
+
+      #map {
+        height: 420px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .section {
+        padding: 72px 16px;
+      }
+
+      .findings-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .slider-top {
+        font-size: 0.82rem;
+      }
+
+      .gauge-panel-top {
+        flex-wrap: wrap;
+      }
+    }
+  </style>
+</head>
+<body>
+  <section id="hero">
+    <canvas id="heroCanvas"></canvas>
+    <div class="hero-overlay"></div>
+    <div class="hero-content reveal">
+      <span class="badge">ISRT · University of Dhaka</span>
+      <h1>Mapping Poverty <span class="accent">from Space</span></h1>
+      <p class="hero-subtitle">Predicting district-level poverty across Bangladesh using satellite nighttime light, vegetation indices, and geospatial data — no ground surveys required.</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="https://povertypredictionbd-phjajjhjhoxmrkzgy7kxod.streamlit.app" target="_blank" rel="noreferrer">Explore Dashboard</a>
+        <a class="btn btn-secondary" href="https://github.com/raiyan-ahmed-khan/Poverty_Prediction_BD" target="_blank" rel="noreferrer">View on GitHub</a>
+      </div>
+    </div>
+    <div class="scroll-indicator" aria-hidden="true">
+      <div class="mouse"></div>
+    </div>
+  </section>
+
+  <section class="section reveal" id="problem">
+    <div class="problem-grid">
+      <div class="counter-stack">
+        <article class="card counter-card">
+          <div>
+            <div class="counter-value" data-target="64">0</div>
+            <p>Districts Analyzed</p>
+          </div>
+        </article>
+        <article class="card counter-card">
+          <div>
+            <div class="counter-value" data-target="19">0</div>
+            <p>Satellite Features</p>
+          </div>
+        </article>
+        <article class="card counter-card">
+          <div>
+            <div class="counter-value" data-target="8">0</div>
+            <p>Division Labels Only</p>
+          </div>
+        </article>
+      </div>
+      <article class="card problem-copy">
+        <h2>The Data Gap</h2>
+        <p class="muted">Bangladesh's most recent national survey provides poverty estimates for only 8 divisions — leaving 64 districts without individual data. This project uses freely available satellite imagery to fill that gap.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="section reveal" id="pipeline">
+    <h2 class="section-title">Pipeline</h2>
+    <div class="pipeline-wrap reveal" id="pipelineWrap">
+      <div class="pipeline-line"></div>
+      <div class="pipeline-grid">
+        <article class="pipeline-step">
+          <div class="step-icon">🛰</div>
+          <h3>Satellite Data</h3>
+          <p>Nighttime light, NDVI, elevation, land cover.</p>
+        </article>
+        <article class="pipeline-step">
+          <div class="step-icon">⚙️</div>
+          <h3>GEE Extraction</h3>
+          <p>District-level zonal stats from Google Earth Engine.</p>
+        </article>
+        <article class="pipeline-step">
+          <div class="step-icon">🔧</div>
+          <h3>Feature Engineering</h3>
+          <p>Spatial lags and robust temporal indicators.</p>
+        </article>
+        <article class="pipeline-step">
+          <div class="step-icon">🤖</div>
+          <h3>Model Training</h3>
+          <p>RF, CNN, and baseline models with tuning.</p>
+        </article>
+        <article class="pipeline-step">
+          <div class="step-icon">📊</div>
+          <h3>Evaluation</h3>
+          <p>LODO spatial cross-validation against holdout regions.</p>
+        </article>
+        <article class="pipeline-step">
+          <div class="step-icon">🌐</div>
+          <h3>Live Prediction</h3>
+          <p>Public API + interactive district exploration.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section reveal" id="findings">
+    <h2 class="section-title">Key Findings</h2>
+    <div class="findings-grid">
+      <article class="glass-card reveal">
+        <p class="finding-value">0.733</p>
+        <p>Moran's I — Strong spatial clustering</p>
+      </article>
+      <article class="glass-card reveal">
+        <p class="finding-value">3.63pp</p>
+        <p>RMSE — Best model accuracy</p>
+      </article>
+      <article class="glass-card reveal">
+        <p class="finding-value">17.3%</p>
+        <p>Spatial lag importance</p>
+      </article>
+      <article class="glass-card reveal">
+        <p class="finding-value">19.2%</p>
+        <p>Elevation dominates features</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="section reveal" id="interactive-map">
+    <h2 class="section-title">Interactive Map</h2>
+    <div class="map-layout">
+      <div class="map-shell card">
+        <div id="mapLoading" class="map-loading">Loading map data...</div>
+        <div id="map"></div>
+      </div>
+      <aside class="card district-panel" id="districtPanel">
+        <h3>District Explorer</h3>
+        <p class="muted" id="districtDefault">Click any district to explore</p>
+      </aside>
+    </div>
+  </section>
+
+  <section class="section reveal" id="predictor">
+    <h2 class="section-title">Live Predictor</h2>
+    <div class="predictor-layout">
+      <article class="card slider-panel">
+        <div class="slider-group">
+          <div class="slider-top"><span>Nighttime Light (NTL)</span><strong id="ntl_mean_val">0.87</strong></div>
+          <input type="range" id="ntl_mean" min="0.34" max="5.78" step="0.01" value="0.87" />
+          <div class="slider-range-meta"><span>min 0.34</span><span>max 5.78</span></div>
+        </div>
+        <div class="slider-group">
+          <div class="slider-top"><span>Vegetation (NDVI)</span><strong id="ndvi_mean_val">0.59</strong></div>
+          <input type="range" id="ndvi_mean" min="0.37" max="0.78" step="0.001" value="0.59" />
+          <div class="slider-range-meta"><span>min 0.37</span><span>max 0.78</span></div>
+        </div>
+        <div class="slider-group">
+          <div class="slider-top"><span>Elevation (m)</span><strong id="elevation_mean_val">30</strong></div>
+          <input type="range" id="elevation_mean" min="4" max="193" step="1" value="30" />
+          <div class="slider-range-meta"><span>min 4</span><span>max 193</span></div>
+        </div>
+        <div class="slider-group">
+          <div class="slider-top"><span>Road Density (km/km²)</span><strong id="road_density_val">2.59</strong></div>
+          <input type="range" id="road_density" min="0.02" max="9.68" step="0.01" value="2.59" />
+          <div class="slider-range-meta"><span>min 0.02</span><span>max 9.68</span></div>
+        </div>
+        <div class="slider-group">
+          <div class="slider-top"><span>Urban Fraction</span><strong id="urban_fraction_val">0.015</strong></div>
+          <input type="range" id="urban_fraction" min="0" max="0.18" step="0.001" value="0.015" />
+          <div class="slider-range-meta"><span>min 0.00</span><span>max 0.18</span></div>
+        </div>
+        <div class="slider-group" style="margin-bottom:0;">
+          <div class="slider-top"><span>Water Coverage</span><strong id="water_fraction_val">0.066</strong></div>
+          <input type="range" id="water_fraction" min="0" max="0.30" step="0.001" value="0.066" />
+          <div class="slider-range-meta"><span>min 0.00</span><span>max 0.30</span></div>
+        </div>
+      </article>
+
+      <article class="card gauge-panel">
+        <div class="gauge-panel-top">
+          <h3>Estimated Poverty</h3>
+          <span class="predict-status" id="predictStatus">Waiting for prediction</span>
+        </div>
+        <div class="progress-wrap" id="predictProgress">
+          <div class="progress-msg">Waking up prediction server... (~30 sec on first load)</div>
+          <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+        </div>
+        <div class="loading-inline" id="predictLoadingHint" aria-live="polite">
+          <span class="loading-dot" aria-hidden="true"></span>
+          <span>Loading prediction...</span>
+        </div>
+
+        <div class="gauge-shell">
+          <svg width="260" height="150" viewBox="0 0 260 150" role="img" aria-label="Predicted poverty gauge">
+            <path d="M20 130 A110 110 0 0 1 240 130" fill="none" stroke="#25364c" stroke-width="16" stroke-linecap="round"></path>
+            <path id="gaugeArc" d="M20 130 A110 110 0 0 1 240 130" fill="none" stroke="#22c55e" stroke-width="16" stroke-linecap="round" stroke-dasharray="346" stroke-dashoffset="346"></path>
+          </svg>
+          <div class="gauge-value" id="gaugeValue">--%</div>
+          <div class="gauge-label">Predicted Poverty Headcount</div>
+          <div class="predict-meta" id="predictMeta">Adjust sliders to update prediction</div>
+        </div>
+
+        <p class="similar-title">Most Similar Districts</p>
+        <div class="similar-list" id="similarList">
+          <div class="muted">Similar districts will appear here</div>
+        </div>
+        <p class="caption" id="predictError" style="display:none;color:#fda4af;">Server starting up — adjust a slider in 30 seconds to retry</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="section reveal" id="results">
+    <h2 class="section-title">Model Results</h2>
+
+    <article class="card chart-block">
+      <h3 style="margin-bottom:12px;">A) RMSE Comparison</h3>
+      <div class="bar-item">
+        <div class="bar-meta"><span>Naive Baseline</span><span>4.163pp</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:95.6%;background:#64748b;"></div></div>
+      </div>
+      <div class="bar-item">
+        <div class="bar-meta"><span>CNN ResNet-18</span><span>4.354pp</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:100%;background:#64748b;"></div></div>
+      </div>
+      <div class="bar-item">
+        <div class="bar-meta"><span>Random Forest <span class="accent">(winner)</span></span><span>3.626pp</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:83.3%;background:#00c4ff;"></div></div>
+      </div>
+      <p class="caption">Lower is better · LODO spatial cross-validation</p>
+    </article>
+
+    <article class="card chart-block">
+      <h3 style="margin-bottom:12px;">B) Feature Importance</h3>
+      <div class="bar-item">
+        <div class="bar-meta"><span>elevation_mean</span><span>19.2%</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:100%;background:#00c4ff;"></div></div>
+      </div>
+      <div class="bar-item">
+        <div class="bar-meta"><span>ntl_mean_spatial_lag <span style="color:#f59e0b;">(spatial)</span></span><span>17.3%</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:90.1%;background:#f59e0b;"></div></div>
+      </div>
+      <div class="bar-item">
+        <div class="bar-meta"><span>ntl_iqr</span><span>9.3%</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:48.4%;background:#00c4ff;"></div></div>
+      </div>
+      <div class="bar-item">
+        <div class="bar-meta"><span>road_density</span><span>9.2%</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:47.9%;background:#00c4ff;"></div></div>
+      </div>
+      <div class="bar-item">
+        <div class="bar-meta"><span>ntl_yoy_change</span><span>6.5%</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:33.8%;background:#00c4ff;"></div></div>
+      </div>
+      <p class="caption">Orange = spatial lag features (neighboring district averages) — contribute 29% total</p>
+    </article>
+  </section>
+
+  <section class="section reveal" id="quote">
+    <article class="quote-card">
+      <blockquote>“A district's own nighttime light was less predictive than its neighbors' light.”</blockquote>
+      <p class="quote-subtext">Where you are matters more than what you look like from space.</p>
+    </article>
+  </section>
+
+  <footer class="reveal" id="footer">
+    <div class="footer-inner">
+      <div class="footer-links">
+        <a class="btn btn-primary" href="https://povertypredictionbd-phjajjhjhoxmrkzgy7kxod.streamlit.app" target="_blank" rel="noreferrer">Live Dashboard</a>
+        <a class="btn btn-secondary" href="https://github.com/raiyan-ahmed-khan/Poverty_Prediction_BD" target="_blank" rel="noreferrer">GitHub</a>
+        <a class="btn btn-secondary" href="../docs/Bangladesh_Poverty_Prediction___Satellite_ML_research_paper.pdf" target="_blank" rel="noreferrer">Research Paper</a>
+      </div>
+      <p class="muted">Built at ISRT, University of Dhaka · 2024 · Raiyan Ahmed Khan</p>
+    </div>
+  </footer>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script>
+    const API_BASE = 'https://bangladesh-poverty-api.onrender.com';
+    const GEOJSON_URL = 'https://raw.githubusercontent.com/raiyan-ahmed-khan/Poverty_Prediction_BD/main/lovable_app/data/bangladesh_districts.geojson';
+
+    const sectionObserver = new IntersectionObserver((entries, observer) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('in-view');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.14 });
+
+    document.querySelectorAll('.reveal').forEach((el, idx) => {
+      el.style.transitionDelay = `${Math.min((idx % 6) * 70, 280)}ms`;
+      sectionObserver.observe(el);
+    });
+
+    const counterObserver = new IntersectionObserver((entries, observer) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        const target = Number(entry.target.dataset.target || 0);
+        const duration = 1200;
+        const start = performance.now();
+        const animate = (now) => {
+          const progress = Math.min((now - start) / duration, 1);
+          entry.target.textContent = String(Math.floor(progress * target));
+          if (progress < 1) {
+            requestAnimationFrame(animate);
+          } else {
+            entry.target.textContent = String(target);
+          }
+        };
+        requestAnimationFrame(animate);
+        observer.unobserve(entry.target);
+      });
+    }, { threshold: 0.55 });
+
+    document.querySelectorAll('.counter-value').forEach((el) => counterObserver.observe(el));
+
+    const pipelineWrap = document.getElementById('pipelineWrap');
+    new IntersectionObserver((entries, observer) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          pipelineWrap.classList.add('in-view');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.35 }).observe(pipelineWrap);
+
+    function startHeroParticles() {
+      const canvas = document.getElementById('heroCanvas');
+      const ctx = canvas.getContext('2d');
+      let w = canvas.width = window.innerWidth;
+      let h = canvas.height = window.innerHeight;
+      const count = Math.max(60, Math.floor(w / 18));
+      const particles = Array.from({ length: count }, () => ({
+        x: Math.random() * w,
+        y: Math.random() * h,
+        vx: (Math.random() - 0.5) * 0.35,
+        vy: (Math.random() - 0.5) * 0.35,
+        r: Math.random() * 1.8 + 0.7
+      }));
+
+      function tick() {
+        ctx.clearRect(0, 0, w, h);
+        for (let i = 0; i < particles.length; i++) {
+          const p = particles[i];
+          p.x += p.vx;
+          p.y += p.vy;
+          if (p.x < 0 || p.x > w) p.vx *= -1;
+          if (p.y < 0 || p.y > h) p.vy *= -1;
+          ctx.fillStyle = 'rgba(255,255,255,0.8)';
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+          ctx.fill();
+
+          for (let j = i + 1; j < particles.length; j++) {
+            const q = particles[j];
+            const dx = p.x - q.x;
+            const dy = p.y - q.y;
+            const dist = Math.hypot(dx, dy);
+            if (dist < 120) {
+              ctx.strokeStyle = `rgba(255,255,255,${(1 - dist / 120) * 0.25})`;
+              ctx.lineWidth = 1;
+              ctx.beginPath();
+              ctx.moveTo(p.x, p.y);
+              ctx.lineTo(q.x, q.y);
+              ctx.stroke();
+            }
+          }
+        }
+        requestAnimationFrame(tick);
+      }
+
+      tick();
+      window.addEventListener('resize', () => {
+        w = canvas.width = window.innerWidth;
+        h = canvas.height = window.innerHeight;
+      });
+    }
+
+    function normalizeDistrictName(name) {
+      return String(name || '')
+        .toLowerCase()
+        .replace(/district|zila|zilla|জেলা/gi, '')
+        .replace(/[^a-z0-9\s]/gi, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
+    function getPovertyColor(rate) {
+      if (rate < 19) return '#22c55e';
+      if (rate <= 23) return '#f59e0b';
+      return '#ef4444';
+    }
+
+    function findFeatureDistrictName(feature) {
+      const props = feature.properties || {};
+      return props.district_name || props.NAME_2 || props.DISTRICT || props.name || props.NAME || '';
+    }
+
+    async function initMap() {
+      const loadingEl = document.getElementById('mapLoading');
+      const districtPanel = document.getElementById('districtPanel');
+
+      const map = L.map('map', {
+        zoomControl: true,
+        minZoom: 6,
+        maxZoom: 10,
+      }).setView([23.7, 90.3], 7);
+
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+      }).addTo(map);
+
+      try {
+        const [geojsonRes, districtsRes] = await Promise.all([
+          fetch(GEOJSON_URL),
+          fetch(`${API_BASE}/districts`),
+        ]);
+
+        if (!geojsonRes.ok || !districtsRes.ok) {
+          throw new Error('Failed to load map sources');
+        }
+
+        const [geojsonData, districtsData] = await Promise.all([
+          geojsonRes.json(),
+          districtsRes.json(),
+        ]);
+
+        const districtLookup = new Map();
+        const districtList = Array.isArray(districtsData) ? districtsData : (districtsData.districts || []);
+
+        districtList.forEach((item) => {
+          const rawName = item.district_name || item.district || item.name;
+          districtLookup.set(normalizeDistrictName(rawName), item);
+        });
+
+        function layerStyle(feature) {
+          const rawName = findFeatureDistrictName(feature);
+          const district = districtLookup.get(normalizeDistrictName(rawName));
+          const poverty = Number(district?.poverty_hcr ?? 24);
+          return {
+            fillColor: getPovertyColor(poverty),
+            fillOpacity: 0.7,
+            color: '#ffffff',
+            weight: 1,
+          };
+        }
+
+        function renderDistrictPanel(district, fallbackName) {
+          const districtName = district?.district_name || fallbackName || 'Unknown District';
+          const divisionName = district?.division_name || district?.division || 'Unknown Division';
+          const poverty = Number(district?.poverty_hcr ?? 0);
+          const badgeColor = getPovertyColor(poverty);
+
+          const features = [
+            ['🌃 NTL Mean', district?.ntl_mean],
+            ['🌱 NDVI Mean', district?.ndvi_mean],
+            ['⛰ Elevation', district?.elevation_mean],
+            ['🛣 Road Density', district?.road_density],
+            ['🏙 Urban Fraction', district?.urban_fraction],
+            ['💧 Water Fraction', district?.water_fraction],
+          ];
+
+          districtPanel.innerHTML = `
+            <h3>${districtName}</h3>
+            <p class="muted">${divisionName}</p>
+            <span class="status-badge" style="background:${badgeColor}22;border-color:${badgeColor};color:${badgeColor};">Poverty: ${Number.isFinite(poverty) ? poverty.toFixed(2) : 'N/A'}%</span>
+            <div class="features-grid">
+              ${features.map(([label, value]) => `<div class="feature-row"><span>${label}</span><strong>${Number.isFinite(Number(value)) ? Number(value).toFixed(3) : 'N/A'}</strong></div>`).join('')}
+            </div>
+          `;
+        }
+
+        let hoveredLayer = null;
+        const geoLayer = L.geoJSON(geojsonData, {
+          style: layerStyle,
+          onEachFeature: (feature, layer) => {
+            const name = findFeatureDistrictName(feature);
+            const district = districtLookup.get(normalizeDistrictName(name));
+            const poverty = Number(district?.poverty_hcr ?? 0);
+
+            layer.bindTooltip(
+              `<strong>${name || district?.district_name || 'Unknown'}</strong><br/>Poverty: ${Number.isFinite(poverty) ? poverty.toFixed(2) : 'N/A'}%`,
+              { className: 'custom-tooltip', sticky: true }
+            );
+
+            layer.on('mouseover', () => {
+              if (hoveredLayer) geoLayer.resetStyle(hoveredLayer);
+              hoveredLayer = layer;
+              layer.setStyle({ weight: 2, fillOpacity: 0.86 });
+            });
+
+            layer.on('mouseout', () => {
+              geoLayer.resetStyle(layer);
+            });
+
+            layer.on('click', () => {
+              renderDistrictPanel(district, name);
+            });
+          },
+        }).addTo(map);
+
+        map.fitBounds(geoLayer.getBounds(), { padding: [10, 10] });
+        loadingEl.style.display = 'none';
+      } catch (error) {
+        loadingEl.textContent = 'Failed to load map data.';
+        districtPanel.innerHTML = `<h3>District Explorer</h3><p class="muted">Map data is currently unavailable.</p>`;
+      }
+    }
+
+    const sliderKeys = ['ntl_mean', 'ndvi_mean', 'elevation_mean', 'road_density', 'urban_fraction', 'water_fraction'];
+    const predictionCache = new Map();
+    let firstSuccessfulPrediction = false;
+    let progressTimer = null;
+    let latestPredictionRequestId = 0;
+
+    function getSliderPayload() {
+      return sliderKeys.reduce((acc, key) => {
+        acc[key] = Number(document.getElementById(key).value);
+        return acc;
+      }, {});
+    }
+
+    function updateSliderLabels() {
+      const decimalsByKey = {
+        ntl_mean: 2,
+        ndvi_mean: 3,
+        elevation_mean: 0,
+        road_density: 2,
+        urban_fraction: 3,
+        water_fraction: 3,
+      };
+
+      sliderKeys.forEach((key) => {
+        const slider = document.getElementById(key);
+        const valueEl = document.getElementById(`${key}_val`);
+        const decimals = decimalsByKey[key] ?? 2;
+        valueEl.textContent = Number(slider.value).toFixed(decimals);
+
+        const min = Number(slider.min);
+        const max = Number(slider.max);
+        const current = Number(slider.value);
+        const pct = ((current - min) / (max - min)) * 100;
+        slider.style.background = `linear-gradient(90deg, var(--accent) ${pct}%, var(--accent) ${pct}%, rgba(100, 116, 139, 0.24) ${pct}%, rgba(100, 116, 139, 0.24) 100%)`;
+      });
+    }
+
+    function setPredictStatus(text, color) {
+      const statusEl = document.getElementById('predictStatus');
+      statusEl.textContent = text;
+      statusEl.style.color = color;
+      statusEl.style.borderColor = `${color}88`;
+      statusEl.style.background = `${color}1e`;
+    }
+
+    function setPredictMeta(text, color = 'var(--muted)') {
+      const metaEl = document.getElementById('predictMeta');
+      metaEl.textContent = text;
+      metaEl.style.color = color;
+    }
+
+    function updateGauge(value) {
+      const gaugeArc = document.getElementById('gaugeArc');
+      const gaugeValue = document.getElementById('gaugeValue');
+      const safeValue = Math.max(0, Math.min(100, Number(value) || 0));
+      const circumference = 346;
+      const offset = circumference * (1 - safeValue / 100);
+      gaugeArc.style.strokeDashoffset = String(offset);
+      gaugeArc.style.stroke = getPovertyColor(safeValue);
+      gaugeValue.textContent = `${safeValue.toFixed(2)}%`;
+      gaugeValue.style.color = getPovertyColor(safeValue);
+    }
+
+    function renderSimilarDistricts(responseData) {
+      const list = document.getElementById('similarList');
+      const candidates = responseData?.similar_districts || responseData?.nearest_districts || responseData?.neighbors || [];
+      const top3 = Array.isArray(candidates) ? candidates.slice(0, 3) : [];
+
+      if (!top3.length) {
+        list.innerHTML = '<div class="muted">No similar district metadata returned</div>';
+        return;
+      }
+
+      list.innerHTML = top3.map((item) => {
+        const name = item.district_name || item.name || 'Unknown';
+        const poverty = Number(item.poverty_hcr ?? item.predicted_poverty ?? item.score);
+        const value = Number.isFinite(poverty) ? `${poverty.toFixed(2)}%` : 'N/A';
+        return `<div class="similar-item"><span>${name}</span><strong>${value}</strong></div>`;
+      }).join('');
+    }
+
+    function showProgress(active) {
+      const wrap = document.getElementById('predictProgress');
+      const fill = document.getElementById('progressFill');
+      if (!active) {
+        wrap.classList.remove('active');
+        fill.style.width = '0%';
+        if (progressTimer) {
+          clearInterval(progressTimer);
+          progressTimer = null;
+        }
+        return;
+      }
+
+      wrap.classList.add('active');
+      let progress = 3;
+      fill.style.width = `${progress}%`;
+      if (progressTimer) clearInterval(progressTimer);
+      progressTimer = setInterval(() => {
+        progress = Math.min(95, progress + 2.2);
+        fill.style.width = `${progress}%`;
+      }, 1000);
+    }
+
+    function showPredictionLoading(active) {
+      const hint = document.getElementById('predictLoadingHint');
+      if (!hint) return;
+      hint.classList.toggle('active', active);
+    }
+
+    async function requestPrediction() {
+      const errorEl = document.getElementById('predictError');
+      const payload = getSliderPayload();
+      const cacheKey = JSON.stringify(payload);
+      const requestId = ++latestPredictionRequestId;
+
+      errorEl.style.display = 'none';
+
+      if (predictionCache.has(cacheKey)) {
+        const cached = predictionCache.get(cacheKey);
+        updateGauge(cached.prediction);
+        renderSimilarDistricts(cached.raw);
+        setPredictStatus(cached.raw?.label || 'Cached result', getPovertyColor(cached.prediction));
+        setPredictMeta('Instant result from cache');
+        showPredictionLoading(false);
+        return;
+      }
+
+      if (!firstSuccessfulPrediction) {
+        showProgress(true);
+        setPredictMeta('Sending initial request to wake server...');
+      } else {
+        setPredictMeta('Updating prediction...');
+      }
+
+      showPredictionLoading(true);
+      setPredictStatus('Predicting...', '#9fb5cc');
+
+      try {
+        const response = await fetch(`${API_BASE}/predict`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        if (requestId !== latestPredictionRequestId) {
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error('Prediction API error');
+        }
+
+        const data = await response.json();
+        const pred = Number(data.poverty_hcr ?? data.predicted_poverty_hcr ?? data.prediction ?? data.poverty_rate);
+        updateGauge(pred);
+        renderSimilarDistricts(data);
+        setPredictStatus(data.label || 'Prediction ready', getPovertyColor(pred));
+        setPredictMeta('Prediction updated successfully');
+
+        predictionCache.set(cacheKey, {
+          prediction: pred,
+          raw: data,
+        });
+
+        firstSuccessfulPrediction = true;
+        showProgress(false);
+        showPredictionLoading(false);
+      } catch (error) {
+        if (requestId !== latestPredictionRequestId) {
+          return;
+        }
+        showProgress(false);
+        showPredictionLoading(false);
+        setPredictStatus('Server cold start', '#f59e0b');
+        setPredictMeta('Retry shortly by adjusting any slider', '#f59e0b');
+        errorEl.style.display = 'block';
+      }
+    }
+
+    function debounce(fn, wait = 500) {
+      let timer;
+      return (...args) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn(...args), wait);
+      };
+    }
+
+    const debouncedPredict = debounce(requestPrediction, 500);
+
+    function initPredictor() {
+      updateSliderLabels();
+      sliderKeys.forEach((key) => {
+        const slider = document.getElementById(key);
+        slider.addEventListener('input', () => {
+          updateSliderLabels();
+          debouncedPredict();
+        });
+      });
+      requestPrediction();
+    }
+
+    async function loadModelInfo() {
+      try {
+        await fetch(`${API_BASE}/model-info`);
+      } catch (error) {
+      }
+    }
+
+    startHeroParticles();
+    initMap();
+    initPredictor();
+    loadModelInfo();
+  </script>
+</body>
+</html>
