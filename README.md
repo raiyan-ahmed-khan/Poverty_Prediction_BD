@@ -192,7 +192,7 @@ uvicorn main:app --reload --port 8000
   author    = {Raiyan Ahmed Khan},
   title     = {Predicting Regional Poverty Levels in Bangladesh
                Using Satellite Night-Light Data and Geospatial Features},
-  year      = {2024},
+  year      = {2026},
   publisher = {ISRT, University of Dhaka},
   url       = {https://github.com/raiyan-ahmed-khan/Poverty_Prediction_BD}
 }
