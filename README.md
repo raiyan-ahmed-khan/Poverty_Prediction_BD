@@ -1,4 +1,4 @@
-# 🛰️ Mapping Poverty from Space — Bangladesh
+# Mapping Poverty from Space — Bangladesh
 
 > Predicting district-level poverty in Bangladesh using satellite
 > nighttime light, vegetation indices, terrain data, and road
@@ -13,7 +13,7 @@
 
 ---
 
-## 🧭 About This Project
+## About This Project
 
 Traditional poverty measurement relies on household surveys —
 expensive, infrequent, and only available at coarse spatial scales.
@@ -24,7 +24,7 @@ individual poverty data.
 This project asks: **can satellite imagery and geospatial data replace
 ground surveys for poverty estimation?**
 
-We build an end-to-end machine learning pipeline that extracts 19
+I build an end-to-end machine learning pipeline that extracts 19
 features from freely available satellite sources — nighttime light
 radiance, vegetation indices, land cover, elevation, population density,
 and road networks — for all 64 districts of Bangladesh, then trains
@@ -40,7 +40,7 @@ sample size.
 
 ---
 
-## 🔧 What This Project Does
+## What This Project Does
 
 The pipeline covers the full research workflow across 9 notebooks:
 
@@ -60,7 +60,7 @@ The pipeline covers the full research workflow across 9 notebooks:
 
 ---
 
-## 🗺️ Key Result
+## Key Result
 
 ![Poverty Prediction Map](outputs/maps/poverty_prediction_map.png)
 
@@ -69,7 +69,7 @@ predictions. Right: Prediction error by district.*
 
 ---
 
-## 📊 Model Performance
+## Model Performance
 
 | Model | RMSE (pp) | MAE (pp) | R² | Validation |
 |-------|-----------|----------|----|------------|
@@ -81,7 +81,7 @@ predictions. Right: Prediction error by district.*
 
 ---
 
-## 🔬 Key Findings
+## Key Findings
 
 - **Poverty is strongly spatially clustered** — Moran's I = 0.733
   (p < 0.001). Poor districts consistently neighbor poor districts.
@@ -98,7 +98,7 @@ predictions. Right: Prediction error by district.*
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 ```
 Poverty_Prediction_BD/
 ├── data/
@@ -130,7 +130,7 @@ Poverty_Prediction_BD/
 
 ---
 
-## 🗂️ Data Sources
+## Data Sources
 
 | Dataset | Source | Resolution | Period |
 |---------|--------|------------|--------|
@@ -146,7 +146,7 @@ Poverty_Prediction_BD/
 
 ---
 
-## 🚀 How to Reproduce
+## How to Reproduce
 ```bash
 # 1. Clone the repository
 git clone https://github.com/raiyan-ahmed-khan/Poverty_Prediction_BD
@@ -176,7 +176,7 @@ uvicorn main:app --reload --port 8000
 
 ---
 
-## 🌐 Live Demo
+## Live Demo
 
 | Resource | Link |
 |----------|------|
@@ -186,7 +186,7 @@ uvicorn main:app --reload --port 8000
 
 ---
 
-## 📄 Citation
+## Citation
 ```bibtex
 @misc{khan2024poverty,
   author    = {Raiyan Ahmed Khan},
@@ -200,7 +200,7 @@ uvicorn main:app --reload --port 8000
 
 ---
 
-## 🙏 Acknowledgements
+## Acknowledgements
 
 - **Institution:** Institute of Statistical Research and Training (ISRT),
   University of Dhaka
