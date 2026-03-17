@@ -3,9 +3,8 @@
 # ISRT, University of Dhaka
 # ============================================================
 
-import os
 import warnings
-warnings.filterwarnings('ignore')
+from pathlib import Path
 
 import streamlit as st
 import pandas as pd
@@ -17,6 +16,14 @@ import plotly.express as px
 import plotly.graph_objects as go
 import joblib
 import json
+
+warnings.filterwarnings('ignore')
+
+BASE_DIR = Path(__file__).resolve().parent
+
+
+def app_path(*parts):
+    return BASE_DIR.joinpath(*parts)
 
 # ── Page config ──────────────────────────────────────────────
 st.set_page_config(
@@ -243,17 +250,17 @@ st.markdown("""
 # ── Data loading (cached) ─────────────────────────────────────
 @st.cache_data
 def load_data():
-    df      = pd.read_csv("data/processed/master_features.csv")
-    shap_df = pd.read_csv("data/processed/shap_values.csv")
-    gdf     = gpd.read_file("data/processed/master_features.gpkg")
+    df      = pd.read_csv(app_path("data", "processed", "master_features.csv"))
+    shap_df = pd.read_csv(app_path("data", "processed", "shap_values.csv"))
+    gdf     = gpd.read_file(app_path("data", "processed", "master_features.gpkg"))
     return df, shap_df, gdf
 
 
 @st.cache_resource
 def load_models():
-    model    = joblib.load("models/random_forest_final.pkl")
-    scaler   = joblib.load("models/scaler_final.pkl")
-    features = joblib.load("models/feature_cols.pkl")
+    model    = joblib.load(app_path("models", "random_forest_final.pkl"))
+    scaler   = joblib.load(app_path("models", "scaler_final.pkl"))
+    features = joblib.load(app_path("models", "feature_cols.pkl"))
     return model, scaler, features
 
 
@@ -303,10 +310,16 @@ def build_folium_map_cached(_gdf, _centroids):
     return m
 
 # ── Load everything ───────────────────────────────────────────
-df, shap_df, gdf   = load_data()
-model, scaler, features = load_models()
-geojson            = get_geojson(gdf)
-centroids          = get_centroids(gdf)
+try:
+    df, shap_df, gdf = load_data()
+    model, scaler, features = load_models()
+    geojson = get_geojson(gdf)
+    centroids = get_centroids(gdf)
+except Exception as exc:
+    st.error("Startup failed while loading data or model files.")
+    st.info("Check that required files exist in deployed paths: `data/processed/*` and `models/*`.")
+    st.exception(exc)
+    st.stop()
 
 
 # ── Sidebar ───────────────────────────────────────────────────
@@ -463,14 +476,14 @@ if page == "🏠 Overview":
         st.markdown("**Poverty Rate (HCR %)**")
         st.plotly_chart(
             make_choropleth('poverty_hcr', 'Poverty Rate', 'Reds', 'HCR (%)', 14, 27),
-            use_container_width=True
+            width='stretch'
         )
 
     with col2:
         st.markdown("**Mean Nighttime Light (2022)**")
         st.plotly_chart(
             make_choropleth('ntl_mean', 'NTL Mean', 'YlOrRd', 'Radiance'),
-            use_container_width=True
+            width='stretch'
         )
 
     st.markdown("---")
@@ -624,7 +637,7 @@ elif page == "🗺️ Explore Map":
                            title_font=dict(size=10)),
                 yaxis=dict(gridcolor='#1e2d4a'),
             )
-            st.plotly_chart(fig_shap, use_container_width=True)
+            st.plotly_chart(fig_shap, width='stretch')
 
         else:
             st.markdown("""
@@ -776,7 +789,7 @@ elif page == "🎛️ Live Predictor":
             paper_bgcolor='#060810',
             font=dict(color='#e2e8f0', family='Space Grotesk')
         )
-        st.plotly_chart(fig_gauge, use_container_width=True)
+        st.plotly_chart(fig_gauge, width='stretch')
         st.caption(
             f"White line = national average poverty ({df['poverty_hcr'].mean():.1f}%). "
             f"Green zone = lower poverty. Red zone = high poverty."
@@ -827,7 +840,7 @@ elif page == "📊 Model Results":
             results_df.style.apply(highlight_best, axis=1).format(
                 {'RMSE': '{:.3f}', 'MAE': '{:.3f}', 'R²': '{:.3f}'}
             ),
-            use_container_width=True,
+            width='stretch',
             hide_index=True
         )
 
@@ -859,7 +872,7 @@ elif page == "📊 Model Results":
                            font=dict(color='#e2e8f0', size=13)),
                 **layout_base
             )
-            st.plotly_chart(fig1, use_container_width=True)
+            st.plotly_chart(fig1, width='stretch')
 
         with col2:
             r2_colors = ['#475569', '#ef4444', '#22c55e']
@@ -877,7 +890,7 @@ elif page == "📊 Model Results":
                            font=dict(color='#e2e8f0', size=13)),
                 **layout_base
             )
-            st.plotly_chart(fig2, use_container_width=True)
+            st.plotly_chart(fig2, width='stretch')
 
         # Per-division table
         st.markdown("### Per-Division Error Breakdown")
@@ -897,7 +910,7 @@ elif page == "📊 Model Results":
                 subset=['RF RMSE', 'CNN RMSE'],
                 cmap='RdYlGn_r'
             ).format({'RF RMSE': '{:.3f}', 'CNN RMSE': '{:.3f}'}),
-            use_container_width=True,
+            width='stretch',
             hide_index=True
         )
 
@@ -949,7 +962,7 @@ elif page == "📊 Model Results":
                 font=dict(color='#94a3b8')
             )
         )
-        st.plotly_chart(fig_imp, use_container_width=True)
+        st.plotly_chart(fig_imp, width='stretch')
 
         col_a, col_b = st.columns(2)
         with col_a:
@@ -1005,7 +1018,7 @@ elif page == "📊 Model Results":
                 bordercolor='#1e2d4a',
             )
         )
-        st.plotly_chart(fig_err, use_container_width=True)
+        st.plotly_chart(fig_err, width='stretch')
 
         st.markdown("""
         <div class='explain-box'>
